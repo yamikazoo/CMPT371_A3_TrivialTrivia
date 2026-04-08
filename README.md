@@ -6,7 +6,7 @@ Semester: Spring 2026
 
 Group Members  
 Calvin Weng 301556001  
-Alex Jiang 301566792  
+Alex Jiang 301566792  aja102@sfu.ca
 
 ------------------------------------------------------------
 
