@@ -11,6 +11,11 @@ from typing import Any
 from .net import iter_json_messages, send_json
 from .questions import QUESTIONS, Question
 
+# Server design notes:
+# - one thread per client for inbound messages
+# - one central game-loop thread for rounds/state transitions
+# - shared mutable state is guarded by self._lock
+
 
 @dataclass
 class Player:
@@ -54,6 +59,7 @@ class TriviaServer:
         self._start_requested = False
 
     def _broadcast(self, message: dict[str, Any]) -> None:
+        # Best-effort broadcast: if a socket write fails, treat that client as gone.
         dead: list[socket.socket] = []
         for s, p in list(self._players.items()):
             try:
@@ -85,6 +91,7 @@ class TriviaServer:
         self._broadcast(self._lobby_payload())
 
     def _remove_player_socket(self, sock: socket.socket, *, reason: str) -> None:
+        # Remove first under lock, then notify everyone with updated game state.
         with self._lock:
             player = self._players.pop(sock, None)
         if not player:
@@ -99,6 +106,7 @@ class TriviaServer:
         self._broadcast_lobby_state()
 
     def _on_start_game_request(self, username: str) -> None:
+        # Any connected player can trigger the start while we are in lobby mode.
         with self._lock:
             if self._game_started:
                 return
@@ -112,7 +120,7 @@ class TriviaServer:
         client_sock.settimeout(None)
         username: str | None = None
         try:
-            # First message must be hello.
+            # First message is a required handshake so usernames are known early.
             msg_iter = iter_json_messages(client_sock)
             first = next(msg_iter)
             if not isinstance(first, dict) or first.get("type") != "hello":
@@ -147,6 +155,7 @@ class TriviaServer:
             for msg in msg_iter:
                 if not isinstance(msg, dict):
                     continue
+                # Keep command handling tight so bad payloads fail closed.
                 if msg.get("type") == "answer":
                     self._on_answer(username, msg)
                 elif msg.get("type") == "start_game":
@@ -184,6 +193,7 @@ class TriviaServer:
             qid = msg.get("question_id")
             value = str(msg.get("value") or "").strip().upper()
             if qid != round_state.question.id:
+                # Ignore stale answers from a previous question.
                 return
 
             option_map = {"A": 0, "B": 1, "C": 2, "D": 3}
@@ -191,6 +201,7 @@ class TriviaServer:
                 return
 
             if option_map[value] == round_state.question.answer_index:
+                # The lock guarantees only one winner can be set for a round.
                 round_state.winner_username = username
                 player.score += 1
                 winner = username
@@ -225,6 +236,7 @@ class TriviaServer:
                 pass
 
     def _accept_loop(self, server_sock: socket.socket) -> None:
+        # Accept loop stays lightweight and immediately hands off to client threads.
         while not self._shutdown.is_set():
             try:
                 client_sock, addr = server_sock.accept()
@@ -276,6 +288,7 @@ class TriviaServer:
                 )
 
                 deadline = time.time() + self.answer_timeout_s
+                # Round ends when either timeout is reached or a winner is set.
                 while time.time() < deadline and not self._shutdown.is_set():
                     with self._lock:
                         winner = self._round.winner_username if self._round else None
