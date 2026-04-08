@@ -5,9 +5,9 @@ Semester: Spring 2026
 RUBRIC NOTE: As per submission guidelines, only one group member will submit the link to this repository on Canvas.
 
 Group Members
-Name	Student ID	Email
-Jane Doe	301111111	jane.doe@university.edu
-John Smith	301222222	john.smith@university.edu
+Name	        Student ID	Email
+Calvin Weng	    301556001	dyw7@sfu.ca
+Alexander Jiang	**	john.smith@university.edu
 
 1. Project Overview & Description
 This project is a competitive multiplayer Trivia Game built using Python's Socket API (TCP). Multiple clients connect to one central server, receive the same question at the same time, and race to answer. The first player to submit the correct answer wins the point for that round. The server manages all game state (questions, scoring, and leaderboard updates), while clients provide a simple GUI for answering.
@@ -19,7 +19,24 @@ Core behavior in this implementation:
 - Short answer cooldown per player after each attempt.
 - Hardcoded trivia question bank (10 questions) to keep scope focused on sockets/concurrency.
 
-2. System Limitations & Edge Cases
+2. Project Structure
+
+TrivialTrivia/
+  backend/
+    src/
+      __init__.py
+      server.py
+      client.py
+      net.py
+      questions.py
+  bridge/
+    server.js
+    package.json
+  frontend/
+    package.json
+    src/
+
+3. System Limitations & Edge Cases
 As required by the project specifications, we have identified and handled (or defined) the following limitations and potential issues within our application scope:
 
 Handling Multiple Clients Concurrently:
@@ -39,40 +56,119 @@ Solution: Server-side try/except around each client handler detects disconnects 
 Answer Cooldown:
 Solution: After each answer attempt, a player enters a short cooldown period (2 seconds) where additional answers are ignored. This is enforced on the server and mirrored on the GUI client.
 
-3. Video Demo
-RUBRIC NOTE: Include a clickable link.
+4. Video Demo
 Our 2-minute video demonstration covering connection establishment, data exchange, real-time gameplay, leaderboard changes, and process termination can be viewed below:
 ▶️ Watch Project Demo on YouTube
 
-4. Prerequisites (Fresh Environment)
-To run this project, you need:
+5. Prerequisites (Fresh Environment)
 
-Python 3.10 or higher.
-No external pip installations are required (uses standard libraries including socket, threading, json, tkinter, argparse, and dataclasses).
-(Optional) VS Code or Terminal.
-RUBRIC NOTE: No external libraries are required. Therefore, a requirements.txt file is not strictly necessary for dependency installation, though one might be included for environment completeness.
 
-5. Step-by-Step Run Guide
-RUBRIC NOTE: The grader must be able to copy-paste these commands.
+Before running the project, make sure the following are installed:
 
-Step 1: Start the Server
-Open your terminal and navigate to the project folder. The server binds to 127.0.0.1 on port 5555 by default.
+- Python 3.10 or newer
+- Node.js 18 or newer
+- npm
+
+You can verify them with:
+
+python --version
+node --version
+npm --version
+
+Installation Guide
+
+1. Clone the repository and enter the project folder
+
+git clone <your-repo-link>
+cd TrivialTrivia
+
+2. Backend setup
+
+The backend uses only standard Python libraries, so no additional installation is required.
+
+3. Bridge setup
+
+Open a terminal and run:
+
+cd /Users/alex/TrivialTrivia/bridge
+npm install
+npm install express ws cors
+
+The bridge server uses:
+- express
+- ws
+- cors
+
+4. Frontend setup
+
+Open a terminal and run:
+
+cd /Users/alex/TrivialTrivia/frontend
+npm install
+npm install framer-motion lucide-react canvas-confetti
+
+The frontend uses:
+- React
+- Vite
+- framer-motion
+- lucide-react
+- canvas-confetti
+
+How to Run the Application
+
+The application requires three separate terminals running at the same time.
+
+Terminal 1: Backend Server
+
+cd /Users/alex/TrivialTrivia/backend
+python -m src.server
+
+Expected output:
+[STARTING] Server listening on 127.0.0.1:5555
+
+Terminal 2: Bridge Server
+
+cd /Users/alex/TrivialTrivia/bridge
+node server.js
+
+Expected output:
+Bridge running on http://localhost:8080
+
+Terminal 3: Frontend
+
+cd /Users/alex/TrivialTrivia/frontend
+npm run dev
+
+Expected output will include a local development URL, usually:
+http://localhost:5173
+
+Open that URL in your browser.
+
+How to Test the Application
+
+1. Start all three terminals in the order shown above
+2. Open the frontend in the browser
+3. Enter a username and click Join
+4. Wait in the lobby
+5. Click Start Game
+6. Answer questions by clicking A, B, C, or D
+7. Verify that the leaderboard updates when a correct answer is submitted
+8. Continue until the game ends
+9. Verify that the final screen appears and confetti plays
+10. Click Back to Home to return to the join screen
+
+Important Notes
+
+- All three terminals must remain running during use
+- If the frontend says Disconnected, check that the bridge and backend are still running
+- If a newly joined player sees that the match is already in progress, restart the backend server to reset the game state
+- Back to Home resets the frontend state, but a full fresh game may still require restarting the backend depending on the current backend state
+
+How to Restart Backend if Needed
+
+Press Ctrl + C in the backend terminal, then run:
 
 python -m src.server
-# Console output: "[STARTING] Server listening on 127.0.0.1:5555"
-
-Step 2: Connect Player 1
-Open a new terminal window (keep the server running). Run the GUI client and choose a username.
-
-python -m src.client --username Player1
-# GUI connects and waits for the next question
-
-Step 3: Connect Additional Players
-Open more terminals and run the client again with different usernames.
-
-python -m src.client --username Player2
-python -m src.client --username Player3
-# Continue up to at least 6 players
 
 Step 4: Gameplay
 The server broadcasts each question and 4 options to all connected clients.
@@ -110,15 +206,19 @@ Optional/utility events:
 {"type":"info","message":"Player2 answered correctly!"}
 
 7. Academic Integrity & References
-RUBRIC NOTE: List all references used and help you got. Below is an example.
 
 Code Origin:
-The socket communication approach follows course TCP examples. The core multithreaded trivia game loop, JSON protocol handling, leaderboard logic, and GUI client implementation were written for this assignment.
+The socket communication approach follows standard TCP examples that can be found online. 
+The core game loop, JSON protocol handling, TCP networking logic, leaderboard logic, and class and method implementations were written by our group.
 
 GenAI Usage:
-ChatGPT/Cursor AI were used to help structure protocol design, edge-case handling notes, and README polishing.
+ChatGPT was used to help structure protocol design, create the frontend react UI, create base skeleton classes and their methods in the backend, and write the README.
+Gemini was used for learning about sockets and threading in python, idea brainstorming and accounting for system limitations and edge cases.
+Gemini was also used for debugging and helping implement certain functions we were stuck on.
 
 References:
-Python Socket Programming HOWTO
-Real Python: Intro to Python Threading
-Tkinter (Python Standard Library) Documentation
+
+Google Gemini 
+Python Socket Programming HOWTO - https://docs.python.org/3/howto/sockets.html 
+Real Python: Intro to Python Threading - https://realpython.com/intro-to-python-threading/
+Tkinter Documentation - https://realpython.com/ref/stdlib/tkinter/ 
