@@ -131,11 +131,22 @@ Step 2. Backend setup
 
 No external libraries are required.
 
-Step 3. Bridge setup
+Step 3. Bridge setup (create it manually)
 
+If the bridge folder does not exist, create it:
+
+mkdir bridge  
 cd bridge  
-npm install  
+
+Initialize Node project:
+
+npm init -y  
+
+Install required packages:
+
 npm install express ws cors  
+
+Create a file called server.js inside the bridge folder and paste the provided bridge server code into it.
 
 Step 4. Frontend setup
 
